@@ -60,13 +60,9 @@
 #pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot Block (000000-0007FFh) not protected from table reads executed in other blocks)
 
 
-
 #include <xc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void getSerialData(char * serialData);
-void setupPins();
-void readADC(int * ADCData);
-void sendSerialData(const char * serialData);
+

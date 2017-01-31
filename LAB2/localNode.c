@@ -15,11 +15,8 @@
 
 
 
-#include <xc.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
+#include "localNode.h"
 
 
 int main () {
