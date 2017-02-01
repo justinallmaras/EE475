@@ -1,6 +1,11 @@
 
+ 
+#ifndef REMOTE_NODE_H
+#define	REMOTE_NODE_H
+
 // CONFIG1H
-#pragma config FOSC = INTIO67   // Oscillator Selection bits (Internal oscillator block)
+// CONFIG1H
+#pragma config FOSC = INTIO7    // Oscillator Selection bits (Internal oscillator block, CLKOUT function on OSC2)
 #pragma config PLLCFG = OFF     // 4X PLL Enable (Oscillator used directly)
 #pragma config PRICLKEN = ON    // Primary clock enable bit (Primary clock enabled)
 #pragma config FCMEN = OFF      // Fail-Safe Clock Monitor Enable bit (Fail-Safe Clock Monitor disabled)
@@ -59,10 +64,14 @@
 // CONFIG7H
 #pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot Block (000000-0007FFh) not protected from table reads executed in other blocks)
 
-
-#include <xc.h>
-
+#include <xc.h> //include xc8 compiler libraries
+#include <pic18f25k22.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+// I2C slave function headers
+void interrupt I2C_Slave_Read();
+void I2C_Slave_Init(short address);
+
+#endif
 
