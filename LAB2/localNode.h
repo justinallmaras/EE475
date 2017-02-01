@@ -1,6 +1,11 @@
 
+ 
+#ifndef LOCAL_NODE_H
+#define	LOCAL_NODE_H
+
 // CONFIG1H
-#pragma config FOSC = INTIO67   // Oscillator Selection bits (Internal oscillator block)
+// CONFIG1H
+#pragma config FOSC = INTIO7    // Oscillator Selection bits (Internal oscillator block, CLKOUT function on OSC2)
 #pragma config PLLCFG = OFF     // 4X PLL Enable (Oscillator used directly)
 #pragma config PRICLKEN = ON    // Primary clock enable bit (Primary clock enabled)
 #pragma config FCMEN = OFF      // Fail-Safe Clock Monitor Enable bit (Fail-Safe Clock Monitor disabled)
@@ -66,7 +71,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void getSerialData(char * serialData);
+
 void setupPins();
 void readADC(int * ADCData);
-void sendSerialData(const char * serialData);
+void getUARTData(char * serialData , unsigned int length);
+void sendUARTData(const char * serialData);
+char UART_Read();
+void UART_Write(char data);
+
+#endif
+
