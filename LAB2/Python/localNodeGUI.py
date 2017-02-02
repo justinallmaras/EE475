@@ -8,10 +8,10 @@ class localNodeGUI(Frame):
 	def __init__(self, master = None):
 		Frame.__init__(self, master)
 		self.pack()
-		self.serialInit()
+		#self.serialInit()
 		self.createWidgets()
-		
-	
+
+
 	def serialInit(self):
 		self.ser = serial.Serial('COM1')
 		self.ser.baudrate = 9600
@@ -20,23 +20,23 @@ class localNodeGUI(Frame):
 		self.ser.stopbits = serial.STOPBITS_ONE
 		self.ser.xonxoff = True
 		self.ser.timeout = 2
-		
-		
+
+
 		self.ser
 		if not self.ser.is_open:
 			self.ser.open()
-			
+
 		if not self.ser.writable() or not self.ser.readable():
 			self.ser.close()
 			self.ser.open()
-		
+
 
 	def createWidgets(self):
 		# Display Frame
 		self.displayFrame = LabelFrame(self, text = 'Value Display')
 		self.displayFrame.grid(column = 1, row = 0)
 		self.createDisplayWidgets(self.displayFrame)
-	
+
 		# Motor Control Frame
 		self.motorFrame = LabelFrame(self, text = 'Motor Control')
 		self.motorFrame.grid(column = 0, row = 0)
@@ -47,8 +47,8 @@ class localNodeGUI(Frame):
 		self.serialFrame.grid(column = 0, columnspan = 2, row = 1)
 		self.createSerialWidgets(self.serialFrame)
 
-	
-		
+
+
 	def createDisplayWidgets(self, displayFrame):
 		# motor speed display
 		self.displayMotorSpeed = LabelFrame(self.displayFrame, text = 'Motor Speed')
@@ -109,7 +109,7 @@ class localNodeGUI(Frame):
 		# motorControlLabel = Label(motorFrame, text = 'Motor Control', bd = 10)
 		# motorControlLabel.pack()
 
-	
+
 	def createMotorControlWidgets(self, motorFrame):
 		# start motor button
 		self.startMotorButton = Button(self.motorFrame, text = 'Start Motor', command = lambda:self.startMotor())
@@ -128,11 +128,11 @@ class localNodeGUI(Frame):
 		self.setPointFrame.pack()
 		self.setPointEntry = Entry(self.setPointFrame)
 		self.setPointEntry.pack()
-		self.specifySetPointButton = Button(self.setPointFrame, text = 'Specify Set Point', command = lambda:self.specifySetPoint(self.setPointEntry.get()))
+		self.specifySetPointButton = Button(self.setPointFrame, text = 'Specify Set Point', command = lambda:self.specifySetPoint())
 		self.specifySetPointButton.pack(fill = 'x')
 
 
-		
+
 	def createSerialWidgets(self, serialFrame):
 		self.baudFrame = LabelFrame(self.serialFrame)
 		self.baudFrame.pack(side = LEFT, fill = 'x')
@@ -141,15 +141,15 @@ class localNodeGUI(Frame):
 		self.baudButton = Button(self.baudFrame, text = 'Set Baud Rate', command = lambda:self.setBaud(self.baudEntry.get()))
 		self.baudButton.pack(fill = 'x')
 
-		
-		
+
+
 		self.byteSizeFrame = LabelFrame(self.serialFrame)
 		self.byteSizeFrame.pack(side = RIGHT, fill = 'x')
 		self.byteSizeEntry = Entry(self.byteSizeFrame)
 		self.byteSizeEntry.pack()
 		self.byteSizeButton = Button(self.byteSizeFrame, text = 'Set Data Bit Size', command = lambda:self.setByteSize())
 		self.byteSizeButton.pack(fill = 'x')
-		
+
 
 		# self.quitButton = Button(self, text = 'Quit', command=self.quit)
 		# self.quitButton.pack(side = BOTTOM)
@@ -168,12 +168,15 @@ class localNodeGUI(Frame):
 
 	def stopMotor(self):
 		self.ser.write('Q')
-		
+
 		#work
 		a = 0
-	def specifySetPoint(self, setPoint):
-		self.ser.write('S' + setPoint)
-		print(self.ser.read(1))
+	def specifySetPoint(self):
+		setPoint = int(self.setPointEntry.get())
+		if setPoint >= 0 and setPoint <= 100:
+			self.setPointVal.set(setPoint)
+			self.ser.write('S' + setPoint)
+			print(self.ser.read(1))
 		#work
 		a = 0
 
@@ -188,20 +191,20 @@ class localNodeGUI(Frame):
 		print(self.ser.read(1))
 		#work
 		a = 0
-		
+
 	def setBaud(self, baudRate):
 		#work
-		
+
 		print(baudRate)
 		self.ser.baudrate = baudRate
 		a = 0
-	
+
 	def setByteSize(self, baudRate):
 		#work
 		a = 0
-		
-		
-		
+
+
+
 root = Tk()
 app = localNodeGUI(master = root)
 app.master.title('Local Node Application')
