@@ -163,9 +163,9 @@ class localNodeGUI(Frame):
 		bytesWritten = 0
 		#setPtEnt
 		setPointInt = self.setPointEntry.get()
-		if self.ser.is_open and setPointInt.isdigit():
+		if self.ser.is_open:
 			#setPointInt = int(setPtEnt)
-			if setPointInt == 0:
+			if setPointInt == 0.0:
 				self.setPointVal.set(50.0)
 				bytesWritten += self.ser.write('X')
 				bytesWritten += self.ser.write(' ')
@@ -177,11 +177,11 @@ class localNodeGUI(Frame):
 
 	def stopMotor(self):
 		bytesWritten = 0
-		setPtEnt
-		setPointInt = self.setPointEntry.get()
-		if self.ser.is_open and setPointInt.isdigit():
+		#setPtEnt
+		#setPointInt = self.setPointEntry.get()
+		if self.ser.is_open:
 			#setPointInt = int(setPtEnt)
-			if setPointInt != 0 :
+			if setPointInt != 0.0 :
 				self.setPointVal.set(0.0)
 				bytesWritten += self.ser.write('Q')
 				bytesWritten += self.ser.write(' ')
@@ -196,7 +196,7 @@ class localNodeGUI(Frame):
 		#setPtEnt
 		setPointInt = self.setPointEntry.get()
 
-		if self.ser.is_open and setPointInt.isdigit() and (int((setPointInt * 10)) % 5 == 0):
+		if self.ser.is_open and int(setPointInt).isdigit() and (int((setPointInt * 10)) % 5 == 0):
 			#setPointInt = int(setPtEnt)
 			if setPointInt >= 0 and setPointInt <= 100:
 				self.setPointVal.set(setPointInt)
@@ -212,7 +212,8 @@ class localNodeGUI(Frame):
 		bytesWritten = 0
 		if self.ser.is_open and setPointInt.isdigit():
 			#setPtEnt
-			setPointInt = self.setPointEntry.get()
+			setPointInt = self.setPointVal;
+			#setPointInt = self.setPointEntry.get()
 			#setPointInt = int(setPtEnt)
 			if setPointInt < 100:
 				setPointInt += 0.5
@@ -230,7 +231,8 @@ class localNodeGUI(Frame):
 		bytesWritten = 0
 		if self.ser.is_open and setPointInt.isdigit():
 			#setPtEnt
-			setPointInt = self.setPointEntry.get()
+			setPointInt = self.setPointVal;
+			#self.setPointEntry.get()
 			#setPointInt = int(setPtEnt)
 			if setPointInt > 0:
 				setPointInt -= 0.5
