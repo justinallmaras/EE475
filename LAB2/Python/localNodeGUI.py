@@ -8,7 +8,7 @@ class localNodeGUI(Frame):
 	def __init__(self, master = None):
 		Frame.__init__(self, master)
 		self.pack()
-		#self.serialInit()
+		self.serialInit()
 		self.createWidgets()
 
 
@@ -149,59 +149,102 @@ class localNodeGUI(Frame):
 		self.byteSizeEntry.pack()
 		self.byteSizeButton = Button(self.byteSizeFrame, text = 'Set Data Bit Size', command = lambda:self.setByteSize())
 		self.byteSizeButton.pack(fill = 'x')
+		
+		self.openSerialButton = Button(self.serialFrame, text = 'Open Serial', command = lambda:self.openSerial())
+		self.openSerialButton.pack(side = LEFT)
+		
+		self.closeSerialButton = Button(self.serialFrame, text = 'Close Serial', command = lambda:self.closeSerial())
+		self.closeSerialButton.pack(side = RIGHT)
+		
 
 
 		# self.quitButton = Button(self, text = 'Quit', command=self.quit)
 		# self.quitButton.pack(side = BOTTOM)
 
 	def startMotor(self):
-		for z in range(120):
-			self.ser.write('X')
-#			print('in waiting ')
-#			print(self.ser.in_waiting)
-#			print('out waiting ')
-#			print(self.ser.out_waiting)
-		#self.ser.flush()
-		print(self.ser.read(1))
-		#work
+		bytesWritten = 0
+		if self.ser.is_open:
+			bytesWritten += self.ser.write('X')
+			bytesWritten += self.ser.write('Z')
+			print(str(bytesWritten) + " bytes written")
+			print(self.ser.read(2))
+		
 		a = 0
 
 	def stopMotor(self):
-		self.ser.write('Q')
-
-		#work
+		bytesWritten = 0
+		if self.ser.is_open:
+			bytesWritten += self.ser.write('Q')
+			bytesWritten += self.ser.write('Z')
+			print(str(bytesWritten) + " bytes written")
+			print(self.ser.read(2))
+		
 		a = 0
+		
 	def specifySetPoint(self):
-		setPoint = int(self.setPointEntry.get())
-		if setPoint >= 0 and setPoint <= 100:
-			self.setPointVal.set(setPoint)
-			self.ser.write('S' + setPoint)
-			print(self.ser.read(1))
-		#work
-		a = 0
+		bytesWritten = 0
+		setPtEnt = self.setPointEntry.get()
+		
+		if self.ser.is_open and setPtEnt.isdigit():
+			setPointInt = int(setPtEnt)
+			if setPointInt >= 0 and setPointInt <= 100:
+				self.setPointVal.set(setPointInt)
+				bytesWritten += self.ser.write('S')
+				#print("HEY HEY this is test: " +  chr(setPointInt))
+				bytesWritten += self.ser.write(chr(setPointInt))
+				print(str(bytesWritten) + " bytes written")
+				
+				
+				
+				bytesRead = self.ser.read(2)
+				
+				#print("Bytes read length")
+				#print(len(bytesRead))
+				
+				
+				print(bytesRead[0] + str(ord(bytesRead[1])))
+	
 
 	def incrementMotorSpeed(self):
-		self.ser.write('I')
-		print(self.ser.read(1))
-		#work
-		a = 0
+		bytesWritten = 0
+		if self.ser.is_open:
+			bytesWritten += self.ser.write('I')
+			bytesWritten += self.ser.write('Z')
+			print(str(bytesWritten) + " bytes written")
+			print(self.ser.read(2))
+		
 
 	def decrementMotorSpeed(self):
-		self.ser.write('D')
-		print(self.ser.read(1))
-		#work
-		a = 0
+		bytesWritten = 0
+		if self.ser.is_open:
+			bytesWritten += self.ser.write('D')
+			bytesWritten += self.ser.write('Z')
+			print(str(bytesWritten) + " bytes written")
+			print(self.ser.read(2))
+		
 
 	def setBaud(self, baudRate):
-		#work
+		
 
 		print(baudRate)
 		self.ser.baudrate = baudRate
 		a = 0
 
 	def setByteSize(self, baudRate):
-		#work
+		
 		a = 0
+		
+	def closeSerial(self):
+		if self.ser.is_open:
+			self.ser.close()
+			print("Serial Closed")
+			
+	def openSerial(self):
+		if not self.ser.is_open:
+			self.serialInit()
+			#self.ser.open()
+			print("Serial Opened")
+			
 
 
 
