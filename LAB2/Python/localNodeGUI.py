@@ -8,7 +8,7 @@ class localNodeGUI(Frame):
 	def __init__(self, master = None):
 		Frame.__init__(self, master)
 		self.pack()
-		self.serialInit()
+		#self.serialInit()
 		self.createWidgets()
 
 
@@ -33,18 +33,18 @@ class localNodeGUI(Frame):
 
 	def createWidgets(self):
 		# Display Frame
-		self.displayFrame = LabelFrame(self, text = 'Value Display')
+		self.displayFrame = LabelFrame(self, text = 'Value Display', width = 500, bd = 10, relief = FLAT)
 		self.displayFrame.grid(column = 1, row = 0)
 		self.createDisplayWidgets(self.displayFrame)
 
 		# Motor Control Frame
-		self.motorFrame = LabelFrame(self, text = 'Motor Control')
+		self.motorFrame = LabelFrame(self, text = 'Motor Control', width = 20, bd = 10, relief = FLAT)
 		self.motorFrame.grid(column = 0, row = 0)
 		self.createMotorControlWidgets(self.motorFrame)
 
 		# Serial Options
-		self.serialFrame = LabelFrame(self, text = 'Serial Options')
-		self.serialFrame.grid(column = 0, columnspan = 2, row = 1)
+		self.serialFrame = LabelFrame(self, text = 'Serial Options', width = 40, bd = 10, relief = FLAT)
+		self.serialFrame.grid(column = 0, columnspan = 2, row = 1, sticky = NSEW)
 		self.createSerialWidgets(self.serialFrame)
 
 
@@ -56,7 +56,7 @@ class localNodeGUI(Frame):
 
 		self.motorSpeedVal = StringVar()
 		self.textMotorSpeed = Label(self.displayMotorSpeed, textvariable = self.motorSpeedVal)
-		self.motorSpeedVal.set('null')     ## temp value
+		self.motorSpeedVal.set(0.0)     ## temp value
 		self.textMotorSpeed.pack()
 
 		# set point display
@@ -65,7 +65,7 @@ class localNodeGUI(Frame):
 
 		self.setPointVal = StringVar()
 		self.textPointVal = Label(self.displaySetPoint, textvariable = self.setPointVal)
-		self.setPointVal.set('null')       ## temp value
+		self.setPointVal.set(0.0)       ## temp value
 		self.textPointVal.pack()
 
 #		# increment display
@@ -161,11 +161,12 @@ class localNodeGUI(Frame):
 
 	def startMotor(self):
 		bytesWritten = 0
-		setPtEnt = self.setPointEntry.get()
-		if self.ser.is_open and setPtEnt.isdigit():
-			setPointInt = int(setPtEnt)
+		#setPtEnt
+		setPointInt = self.setPointEntry.get()
+		if self.ser.is_open and setPointInt.isdigit():
+			#setPointInt = int(setPtEnt)
 			if setPointInt == 0:
-				self.setPointVal.set(50)
+				self.setPointVal.set(50.0)
 				bytesWritten += self.ser.write('X')
 				bytesWritten += self.ser.write(' ')
 
@@ -176,11 +177,12 @@ class localNodeGUI(Frame):
 
 	def stopMotor(self):
 		bytesWritten = 0
-		setPtEnt = self.setPointEntry.get()
-		if self.ser.is_open and setPtEnt.isdigit():
-			setPointInt = int(setPtEnt)
+		setPtEnt
+		setPointInt = self.setPointEntry.get()
+		if self.ser.is_open and setPointInt.isdigit():
+			#setPointInt = int(setPtEnt)
 			if setPointInt != 0 :
-				self.setPointVal.set(0)
+				self.setPointVal.set(0.0)
 				bytesWritten += self.ser.write('Q')
 				bytesWritten += self.ser.write(' ')
 
@@ -191,10 +193,11 @@ class localNodeGUI(Frame):
 
 	def specifySetPoint(self):
 		bytesWritten = 0
-		setPtEnt = self.setPointEntry.get()
+		#setPtEnt
+		setPointInt = self.setPointEntry.get()
 
-		if self.ser.is_open and setPtEnt.isdigit():
-			setPointInt = int(setPtEnt)
+		if self.ser.is_open and setPointInt.isdigit() and (int((setPointInt * 10)) % 5 == 0):
+			#setPointInt = int(setPtEnt)
 			if setPointInt >= 0 and setPointInt <= 100:
 				self.setPointVal.set(setPointInt)
 				bytesWritten += self.ser.write('S')
@@ -207,9 +210,10 @@ class localNodeGUI(Frame):
 
 	def incrementMotorSpeed(self):
 		bytesWritten = 0
-		if self.ser.is_open and setPtEnt.isdigit():
-			setPtEnt = self.setPointEntry.get()
-			setPointInt = int(setPtEnt)
+		if self.ser.is_open and setPointInt.isdigit():
+			#setPtEnt
+			setPointInt = self.setPointEntry.get()
+			#setPointInt = int(setPtEnt)
 			if setPointInt < 100:
 				setPointInt += 0.5
 				if setPointInt >= 100:
@@ -224,9 +228,10 @@ class localNodeGUI(Frame):
 
 	def decrementMotorSpeed(self):
 		bytesWritten = 0
-		if self.ser.is_open and setPtEnt.isdigit():
-			setPtEnt = self.setPointEntry.get()
-			setPointInt = int(setPtEnt)
+		if self.ser.is_open and setPointInt.isdigit():
+			#setPtEnt
+			setPointInt = self.setPointEntry.get()
+			#setPointInt = int(setPtEnt)
 			if setPointInt > 0:
 				setPointInt -= 0.5
 				if setPointInt <= 0:
