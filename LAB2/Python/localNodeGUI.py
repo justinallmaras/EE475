@@ -12,8 +12,9 @@ class localNodeGUI(Frame):
 		self.pack()
 		self.serialInit()
 		self.createWidgets()
-		thread = threading.Thread(target = self.monitorUpdate)
-		thread.start()
+		self.threadRun = True
+		self.thread = threading.Thread(target = self.monitorUpdate)
+		self.thread.start()
 
 
 	def serialInit(self):
@@ -23,7 +24,7 @@ class localNodeGUI(Frame):
 		self.ser.parity = serial.PARITY_NONE
 		self.ser.stopbits = serial.STOPBITS_ONE
 		self.ser.xonxoff = True
-		self.ser.timeout = 0
+		self.ser.timeout = 2
 
 		if not self.ser.is_open:
 			self.ser.open()
@@ -115,14 +116,17 @@ class localNodeGUI(Frame):
 	def createSerialWidgets(self, serialFrame):
 		# button to open the serial port
 		self.openSerialButton = Button(self.serialFrame, text = 'Open Serial', command = lambda:self.openSerial())
-		self.openSerialButton.pack(side = LEFT)
+		self.openSerialButton.grid(column = 0, row = 0, sticky = NSEW)
 		# button to close the serial port
 		self.closeSerialButton = Button(self.serialFrame, text = 'Close Serial', command = lambda:self.closeSerial())
-		self.closeSerialButton.pack(side = RIGHT)
+		self.closeSerialButton.grid(column = 1, row = 0, sticky = NSEW)
+		# button to quit the program
+		self.quitButton = Button(self.serialFrame, text = 'Quit Program', command = lambda:self.quitProgram())
+		self.quitButton.grid(column = 2, row = 0, sticky = NSEW)
 
 	def startMotor(self):
 		bytesWritten = 0
-		setPointInt = self.setPointEntry.get()
+		setPointInt = float(self.setPointVal.get())
 		if self.ser.is_open:
 			if setPointInt == 0.0:
 				self.setPointVal.set(50.0)
@@ -130,13 +134,10 @@ class localNodeGUI(Frame):
 				bytesWritten += self.ser.write(' ')
 				# debugging log
 				print(str(bytesWritten) + " bytes written")
-				print(self.ser.read(2))
-
-
 
 	def stopMotor(self):
 		bytesWritten = 0
-		setPointInt = self.setPointEntry.get()
+		setPointInt = float(self.setPointVal.get())
 		if self.ser.is_open:
 			if setPointInt != 0.0 :
 				self.setPointVal.set(0.0)
@@ -144,29 +145,26 @@ class localNodeGUI(Frame):
 				bytesWritten += self.ser.write(' ')
 				# debugging log
 				print(str(bytesWritten) + " bytes written")
-				print(self.ser.read(2))
-
-
 
 	def specifySetPoint(self):
 		bytesWritten = 0
-		setPointInt = self.setPointEntry.get()
-		if self.ser.is_open and int(setPointInt).isdigit() and (int((setPointInt * 10)) % 5 == 0):
-			setPointInt = int(setPtEnt)
+		setPointInt = 0.0
+		try:
+			setPointInt = float(self.setPointEntry.get())
+		except ValueError:
+			print("numbas pls")
+		if self.ser.is_open and (int(setPointInt * 10) % 5 == 0):
 			if setPointInt >= 0 and setPointInt <= 100:
 				self.setPointVal.set(setPointInt)
 				bytesWritten += self.ser.write('S')
-				bytesWritten += self.ser.write(chr(setPointInt))
+				bytesWritten += self.ser.write(chr(int(2 * setPointInt)))
 				# debugging log
 				print(str(bytesWritten) + " bytes written")
-				bytesRead = self.ser.read(2)
-				print(bytesRead[0] + str(ord(bytesRead[1])))
-
 
 	def incrementMotorSpeed(self):
 		bytesWritten = 0
-		if self.ser.is_open and setPointInt.isdigit():
-			setPointInt = self.setPointVal;
+		setPointInt = float(self.setPointVal.get());
+		if self.ser.is_open and str(int(setPointInt)).isdigit():
 			if setPointInt < 100:
 				setPointInt += 0.5
 				if setPointInt >= 100:
@@ -176,13 +174,11 @@ class localNodeGUI(Frame):
 				bytesWritten += self.ser.write(' ')
 				# debugging log
 				print(str(bytesWritten) + " bytes written")
-				print(self.ser.read(2))
-
 
 	def decrementMotorSpeed(self):
 		bytesWritten = 0
-		if self.ser.is_open and setPointInt.isdigit():
-			setPointInt = self.setPointVal;
+		setPointInt = float(self.setPointVal.get());
+		if self.ser.is_open and str(int(setPointInt)).isdigit():
 			if setPointInt > 0:
 				setPointInt -= 0.5
 				if setPointInt <= 0:
@@ -192,7 +188,7 @@ class localNodeGUI(Frame):
 				bytesWritten += self.ser.write(' ')
 				# debugging log
 				print(str(bytesWritten) + " bytes written")
-				print(self.ser.read(2))
+				#print(self.ser.read(2))
 
 	def closeSerial(self):
 		if self.ser.is_open:
@@ -202,80 +198,50 @@ class localNodeGUI(Frame):
 	def openSerial(self):
 		if not self.ser.is_open:
 			self.serialInit()
-			#self.ser.open()
 			print("Serial Opened")
 
 	def monitorUpdate(self):
-		bytesWritten = 0
-		if self.ser.is_open:
-			bytesWritten += self.ser.write('U')
-			bytesWritten += self.ser.write(' ')
-			data = self.ser.read(2)
-			print(data)
+		while(self.threadRun):	
+			bytesWritten = 0
+			setPt = float(self.setPointVal.get())
+			print("updating...")
+			if self.ser.is_open and self.ser.in_waiting == 0 and self.ser.out_waiting == 0:	
+				bytesWritten += self.ser.write('U')
+				bytesWritten += self.ser.write(' ')
+				print(str(bytesWritten) + " bytes written")
+				temp = self.ser.read(2)
+				
+				# calculate percent error value
+				data = 100 * (float(ord(temp[0])) / 255.0)
+				diff = 100.0 * (data - setPt) 
+				if setPt == 0:
+					error = 0
+				else:
+					error = round(diff / setPt, 1)
+				self.motorSpeedVal.set(round(data, 1))
+				self.errorVal.set(str(error) + '%')
+				
+				# determine class of error
+				if abs(error) > 5:
+					self.alarmVal.set("High Concern")
+				elif abs(error) > 2:
+					self.alarmVal.set("Moderate Concern")
+				elif abs(error) > 1:
+					self.alarmVal.set("Low Concern")
+				else:
+					self.alarmVal.set("No Concern")
+				
+				# wait 1 sec before updating again
+				time.sleep(1)
 
-			self.motorSpeedVal.set(data[1])
-			self.errorVal.set(data[2])
-
-			if data[2] > 5:
-				self.alarmVal.set("ALERT: robo-cock inbound")
-			elif data[2] > 2:
-				self.alarmVal.set("ten cuidado")
-			elif data[2] > 1:
-				self.alarmVal.set("yeet")
-
-
-			time.sleep(1.0 / 10.0)
-
-
-
-
-
-
-
+	def quitProgram(self):
+		self.threadRun = False
+		self.stopMotor()
+		self.ser.close()
+		root.destroy()
+	
+global root
 root = Tk()
 app = localNodeGUI(master = root)
 app.master.title('Local Node Application')
 app.mainloop()
-app.ser.close()
-root.destroy
-
-
-# ser = serial.Serial(
-# 	port='/dev/ttyUSB1',
-# 	baudrate=9600,
-# 	parity=serial.PARITY_ODD,
-# 	stopbits=serial.STOPBITS_TWO,
-# 	bytesize=serial.SEVENBITS
-# )
-
-#.grid_forget after selection to allow data transfer protocol
-
-# from Tkinter import *
-#
-# class Application(Frame):
-#     def say_hi(self):
-#         print "hi there, everyone!"
-#
-#     def createWidgets(self):
-#         self.QUIT = Button(self)
-#         self.QUIT["text"] = "QUIT"
-#         self.QUIT["fg"]   = "red"
-#         self.QUIT["command"] =  self.quit
-#
-#         self.QUIT.pack({"side": "left"})
-#
-#         self.hi_there = Button(self)
-#         self.hi_there["text"] = "Hello",
-#         self.hi_there["command"] = self.say_hi
-#
-#         self.hi_there.pack({"side": "left"})
-#
-#     def __init__(self, master=None):
-#         Frame.__init__(self, master)
-#         self.pack()
-#         self.createWidgets()
-#
-# root = Tk()
-# app = Application(master=root)
-# app.mainloop()
-# root.destroy()
