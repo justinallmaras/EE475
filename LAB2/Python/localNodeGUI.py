@@ -12,8 +12,8 @@ class localNodeGUI(Frame):
 		self.pack()
 		self.serialInit()
 		self.createWidgets()
-		thread = threading.Thread(target = self.monitorUpdate())
-		thread.start
+		thread = threading.Thread(target = self.monitorUpdate)
+		thread.start()
 
 
 	def serialInit(self):
