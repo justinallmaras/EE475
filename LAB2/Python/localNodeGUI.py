@@ -218,9 +218,9 @@ class localNodeGUI(Frame):
 
 			if data[2] > 5:
 				self.alarmVal.set("ALERT: robo-cock inbound")
-			else if data[2] > 2:
+			elif data[2] > 2:
 				self.alarmVal.set("ten cuidado")
-			else if data[2] > 1:
+			elif data[2] > 1:
 				self.alarmVal.set("yeet")
 
 
