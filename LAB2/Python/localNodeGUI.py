@@ -2,14 +2,18 @@
 
 from Tkinter import *
 import serial
+import threading
+import time
 
 
 class localNodeGUI(Frame):
 	def __init__(self, master = None):
 		Frame.__init__(self, master)
 		self.pack()
-		#self.serialInit()
+		self.serialInit()
 		self.createWidgets()
+		thread = threading.Thread(target = self.monitorUpdate())
+		thread.start
 
 
 	def serialInit(self):
@@ -19,10 +23,8 @@ class localNodeGUI(Frame):
 		self.ser.parity = serial.PARITY_NONE
 		self.ser.stopbits = serial.STOPBITS_ONE
 		self.ser.xonxoff = True
-		self.ser.timeout = 2
+		self.ser.timeout = 0
 
-
-		self.ser
 		if not self.ser.is_open:
 			self.ser.open()
 
@@ -68,24 +70,6 @@ class localNodeGUI(Frame):
 		self.setPointVal.set(0.0)       ## temp value
 		self.textPointVal.pack()
 
-#		# increment display
-#		self.displayIncrement = LabelFrame(self.displayFrame, text = 'Increment Value')
-#		self.displayIncrement.pack(fill = 'x')
-
-#		self.incrementVal = StringVar()
-#		self.textIncVal = Label(self.displayIncrement, textvariable = self.incrementVal)
-#		self.incrementVal.set('null')       ## temp value
-#		self.textIncVal.pack()
-
-#		# decrement display
-#		self.displayDecrement = LabelFrame(self.displayFrame, text = 'Decrement Value')
-#		self.displayDecrement.pack(fill = 'x')
-
-#		self.decrementVal = StringVar()
-#		self.textDecVal = Label(self.displayDecrement, textvariable = self.decrementVal)
-#		self.decrementVal.set('null')       ## temp value
-#		self.textDecVal.pack()
-
 		# error info display
 		self.displayError = LabelFrame(self.displayFrame, text = 'Errors')
 		self.displayError.pack(fill = 'x')
@@ -103,11 +87,6 @@ class localNodeGUI(Frame):
 		self.textAlarm = Label(self.displayAlarm, textvariable = self.alarmVal)
 		self.alarmVal.set('null')       ## temp value
 		self.textAlarm.pack()
-
-
-
-		# motorControlLabel = Label(motorFrame, text = 'Motor Control', bd = 10)
-		# motorControlLabel.pack()
 
 
 	def createMotorControlWidgets(self, motorFrame):
@@ -134,42 +113,22 @@ class localNodeGUI(Frame):
 
 
 	def createSerialWidgets(self, serialFrame):
-		# self.baudFrame = LabelFrame(self.serialFrame)
-		# self.baudFrame.pack(side = LEFT, fill = 'x')
-		# self.baudEntry = Entry(self.baudFrame)
-		# self.baudEntry.pack()
-		# self.baudButton = Button(self.baudFrame, text = 'Set Baud Rate', command = lambda:self.setBaud(self.baudEntry.get()))
-		# self.baudButton.pack(fill = 'x')
-		#
-		# self.byteSizeFrame = LabelFrame(self.serialFrame)
-		# self.byteSizeFrame.pack(side = RIGHT, fill = 'x')
-		# self.byteSizeEntry = Entry(self.byteSizeFrame)
-		# self.byteSizeEntry.pack()
-		# self.byteSizeButton = Button(self.byteSizeFrame, text = 'Set Data Bit Size', command = lambda:self.setByteSize())
-		# self.byteSizeButton.pack(fill = 'x')
-
+		# button to open the serial port
 		self.openSerialButton = Button(self.serialFrame, text = 'Open Serial', command = lambda:self.openSerial())
 		self.openSerialButton.pack(side = LEFT)
-
+		# button to close the serial port
 		self.closeSerialButton = Button(self.serialFrame, text = 'Close Serial', command = lambda:self.closeSerial())
 		self.closeSerialButton.pack(side = RIGHT)
 
-
-
-		# self.quitButton = Button(self, text = 'Quit', command=self.quit)
-		# self.quitButton.pack(side = BOTTOM)
-
 	def startMotor(self):
 		bytesWritten = 0
-		#setPtEnt
 		setPointInt = self.setPointEntry.get()
 		if self.ser.is_open:
-			#setPointInt = int(setPtEnt)
 			if setPointInt == 0.0:
 				self.setPointVal.set(50.0)
 				bytesWritten += self.ser.write('X')
 				bytesWritten += self.ser.write(' ')
-
+				# debugging log
 				print(str(bytesWritten) + " bytes written")
 				print(self.ser.read(2))
 
@@ -177,15 +136,13 @@ class localNodeGUI(Frame):
 
 	def stopMotor(self):
 		bytesWritten = 0
-		#setPtEnt
-		#setPointInt = self.setPointEntry.get()
+		setPointInt = self.setPointEntry.get()
 		if self.ser.is_open:
-			#setPointInt = int(setPtEnt)
 			if setPointInt != 0.0 :
 				self.setPointVal.set(0.0)
 				bytesWritten += self.ser.write('Q')
 				bytesWritten += self.ser.write(' ')
-
+				# debugging log
 				print(str(bytesWritten) + " bytes written")
 				print(self.ser.read(2))
 
@@ -193,16 +150,14 @@ class localNodeGUI(Frame):
 
 	def specifySetPoint(self):
 		bytesWritten = 0
-		#setPtEnt
 		setPointInt = self.setPointEntry.get()
-
 		if self.ser.is_open and int(setPointInt).isdigit() and (int((setPointInt * 10)) % 5 == 0):
-			#setPointInt = int(setPtEnt)
+			setPointInt = int(setPtEnt)
 			if setPointInt >= 0 and setPointInt <= 100:
 				self.setPointVal.set(setPointInt)
 				bytesWritten += self.ser.write('S')
 				bytesWritten += self.ser.write(chr(setPointInt))
-
+				# debugging log
 				print(str(bytesWritten) + " bytes written")
 				bytesRead = self.ser.read(2)
 				print(bytesRead[0] + str(ord(bytesRead[1])))
@@ -211,10 +166,7 @@ class localNodeGUI(Frame):
 	def incrementMotorSpeed(self):
 		bytesWritten = 0
 		if self.ser.is_open and setPointInt.isdigit():
-			#setPtEnt
 			setPointInt = self.setPointVal;
-			#setPointInt = self.setPointEntry.get()
-			#setPointInt = int(setPtEnt)
 			if setPointInt < 100:
 				setPointInt += 0.5
 				if setPointInt >= 100:
@@ -222,7 +174,7 @@ class localNodeGUI(Frame):
 				self.setPointVal.set(setPointInt)
 				bytesWritten += self.ser.write('I')
 				bytesWritten += self.ser.write(' ')
-
+				# debugging log
 				print(str(bytesWritten) + " bytes written")
 				print(self.ser.read(2))
 
@@ -230,32 +182,17 @@ class localNodeGUI(Frame):
 	def decrementMotorSpeed(self):
 		bytesWritten = 0
 		if self.ser.is_open and setPointInt.isdigit():
-			#setPtEnt
 			setPointInt = self.setPointVal;
-			#self.setPointEntry.get()
-			#setPointInt = int(setPtEnt)
 			if setPointInt > 0:
 				setPointInt -= 0.5
 				if setPointInt <= 0:
 					setPointInt = 100
 				self.setPointVal.set(setPointInt)
 				bytesWritten += self.ser.write('D')
-				bytesWritten += self.ser.write('Z')
-
+				bytesWritten += self.ser.write(' ')
+				# debugging log
 				print(str(bytesWritten) + " bytes written")
 				print(self.ser.read(2))
-
-
-	def setBaud(self, baudRate):
-
-
-		print(baudRate)
-		self.ser.baudrate = baudRate
-		a = 0
-
-	def setByteSize(self, baudRate):
-
-		a = 0
 
 	def closeSerial(self):
 		if self.ser.is_open:
@@ -267,6 +204,30 @@ class localNodeGUI(Frame):
 			self.serialInit()
 			#self.ser.open()
 			print("Serial Opened")
+
+	def monitorUpdate(self):
+		bytesWritten = 0
+		if self.ser.is_open:
+			bytesWritten += self.ser.write('U')
+			bytesWritten += self.ser.write(' ')
+			data = self.ser.read(2)
+			print(data)
+
+			self.motorSpeedVal.set(data[1])
+			self.errorVal.set(data[2])
+
+			if data[2] > 5:
+				self.alarmVal.set("ALERT: robo-cock inbound")
+			else if data[2] > 2:
+				self.alarmVal.set("ten cuidado")
+			else if data[2] > 1:
+				self.alarmVal.set("yeet")
+
+
+			time.sleep(1.0 / 10.0)
+
+
+
 
 
 
