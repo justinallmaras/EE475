@@ -68,6 +68,7 @@
 #include <pic18f25k22.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // I2C slave function headers
 void interrupt I2C_Slave_Read();

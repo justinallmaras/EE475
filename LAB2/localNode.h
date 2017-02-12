@@ -35,7 +35,7 @@
 #pragma config XINST = OFF      // Extended Instruction Set Enable bit (Instruction set extension and Indexed Addressing mode disabled (Legacy mode))
 
 // CONFIG5L
-#pragma config CP0 = OFF        // Code Protection Block 0 (Block 0 (000800-001FFFh) not code-protected)
+#pragma config CP0 = OFF        //Code Protection Block 0 (Block 0 (000800-001FFFh) not code-protected)
 #pragma config CP1 = OFF        // Code Protection Block 1 (Block 1 (002000-003FFFh) not code-protected)
 #pragma config CP2 = OFF        // Code Protection Block 2 (Block 2 (004000-005FFFh) not code-protected)
 #pragma config CP3 = OFF        // Code Protection Block 3 (Block 3 (006000-007FFFh) not code-protected)
@@ -66,8 +66,8 @@
 
 
 
-#include <xc.h>
-
+#include <xc.h> //include xc8 compiler libraries
+#include <pic18f25k22.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -78,6 +78,15 @@ void getUARTData(char * serialData , unsigned int length);
 void sendUARTData(const char * serialData);
 char UART_Read();
 void UART_Write(char data);
+
+// I2C function headers
+void I2C_Master_Init(const unsigned long c);
+void I2C_Master_Wait();
+void I2C_Master_Start();
+void I2C_Master_Repeated_Start();
+void I2C_Master_Stop();
+//void I2C_Master_Write(unsigned d);
+unsigned short I2C_Master_Read(unsigned short a);
 
 #endif
 
