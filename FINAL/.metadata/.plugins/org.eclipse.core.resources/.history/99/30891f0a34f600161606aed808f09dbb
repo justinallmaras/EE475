@@ -1,0 +1,128 @@
+#include <intrinsics.h>
+#include <stdint.h>
+#include <msp430.h>
+
+//reminder turn off additional clocks to reduce power consumption
+
+#define TRIGGER_PIN     BIT4
+#define ECHO_PIN        BIT3
+#define LED_PIN         BIT3
+
+#define MEAS_INTERVAL  60000
+#define DISTANCE_THRESHOLD 30
+#define DISTANCE_CONST 58
+unsigned int up_counter;
+unsigned int distance;
+
+/* Timer A0 Capture Interrupt routine
+ P1.1 (echo) causes this routine to be called */
+#pragma vector = TIMER0_A0_VECTOR
+__interrupt void TIMER0_A0_ISR(void) {
+    if (TA0CCTL2 & CCI) {          // Raising edge
+        up_counter = TA0CCR2;   // Copy counter to variable
+    } else {                    // Falling edge
+        // Formula: Distance in cm = (Time in uSec)/58
+        distance = (TA0CCR2 - up_counter) / DISTANCE_CONST;
+    }
+    TA0CTL &= ~TAIFG;           // Clear interrupt flag - handled
+    TA0IV = 0;
+}
+
+
+void triggerMeas(void) {
+
+    // start trigger
+    P1OUT |= TRIGGER_PIN;
+    __delay_cycles(10);
+    // end trigger
+    P1OUT &= ~TRIGGER_PIN;
+    __delay_cycles(10);
+}
+
+
+void usSensorInit(void) {
+
+    // initialize trigger pin low to start
+    P1DIR |= TRIGGER_PIN;
+    P1OUT &= ~TRIGGER_PIN;
+
+    // initialize echo pin to capture input
+    P1DIR &= ~ECHO_PIN;
+    P1SEL |= ECHO_PIN;
+
+
+    TA0CTL |= TASSEL_2 + ID_0 + MC_2 + TACLR;
+
+    TA0CCTL2 |= CM_3 + SCS + CCIS_0 + CAP + CCIE;
+
+    _BIS_SR(GIE);
+
+    /*
+    // initialize TA0 to capture in CCR2 on both edges
+    TA0CCTL2 |= CM_3 + SCS + CCIS_0 + CAP + CCIE;
+
+    // SUS\/
+
+    // initialize TA0 to compare CCR0
+    //TA0CTL |= TASSEL_2 + MC_2 + ID_0;
+    // Set up TA0 to compare CCR0 (measure interval)
+    TA0CCR2 = MEAS_INTERVAL;
+    TA0CCTL0 = CCIE;
+
+    // Set up TA0 with ACLK / 4 = 8192 Hz
+    TA0CTL = TASSEL__ACLK | ID__4 | MC__CONTINUOUS | TACLR;
+
+    //global interrupt
+    //__bis_SR_register(GIE);
+    //_BIS_SR(GIE);
+     */
+}
+
+
+
+int main(void) {
+    WDTCTL = WDTPW | WDTHOLD;   // Stop watchdog timer
+
+    // tester led
+    P2DIR |= LED_PIN;
+    P2OUT &= ~LED_PIN;
+
+    // initialize ultrasonic sensors
+    usSensorInit();
+    while(1){
+        P2OUT ^= LED_PIN;
+
+        triggerMeas();
+
+        /*
+        if (distance >= DISTANCE_THRESHOLD) {
+            // Turn on LED
+            P2OUT |= LED_PIN;
+        } else {
+            // Turn off LED
+            P2OUT &= ~LED_PIN;
+        }
+        */
+
+
+        __delay_cycles(10000);
+    }
+    return 0;
+}
+
+
+/*
+#pragma vector = TIMER0_A0_VECTOR
+__interrupt void TIMER0_A0_ISR (void) {
+    // Measure interval tick
+    __low_power_mode_off_on_exit();
+    TA0CCR2 += MEAS_INTERVAL;
+}
+
+#pragma vector = TIMER0_A1_VECTOR
+__interrupt void TIMER0_A1_ISR (void) {
+    // Echo pin state toggled
+    __low_power_mode_off_on_exit();
+    TA0IV = 0;
+}
+*/

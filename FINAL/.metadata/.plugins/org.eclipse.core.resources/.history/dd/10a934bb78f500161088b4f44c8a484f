@@ -1,0 +1,162 @@
+#include <intrinsics.h>
+#include <stdint.h>
+#include <msp430.h>
+
+
+
+
+
+
+#define TRIGGER_PIN     BIT4
+#define ECHO_PIN        BIT3
+#define LED_PIN         BIT5
+
+#define MEAS_INTERVAL   2048
+
+//unsigned int up_counter;
+//unsigned int distance_cm;
+
+#define DISTANCE_THRESHOLD 60
+
+
+/* Timer A0 Capture Interrupt routine
+ P1.1 (echo) causes this routine to be called *//*
+#pragma vector = TIMER0_A0_VECTOR
+__interrupt void TIMER0_A0_ISR(void) {
+    if (TA0CCTL2 & CCI) {          // Raising edge
+        P2DIR |= 5;
+        P2OUT &= ~5;
+        up_counter = TA0CCR2;   // Copy counter to variable
+
+    } else {                    // Falling edge
+
+        // Formula: Distance in cm = (Time in uSec)/58
+        distance_cm = (TA0CCR2 - up_counter)/58;
+        P2DIR |= 5;
+        P2OUT &= 5;
+
+    }
+    TA0CTL &= ~TAIFG;           // Clear interrupt flag - handled
+    TA0IV = 0;
+}*/
+
+
+void triggerMeas(void) {
+
+    // start trigger
+    P1OUT |= TRIGGER_PIN;
+
+    // wait for 10us for trigger pulse
+    __delay_cycles(10);
+
+    // end trigger
+    P1OUT &= ~TRIGGER_PIN;
+
+}
+
+
+void usSensorInit(void) {
+
+    // initialize trigger pin low to start
+    P1DIR |= TRIGGER_PIN;
+    P1OUT &= ~TRIGGER_PIN;
+
+
+    // initialize echo pin to capture input
+    P1DIR &= ~ECHO_PIN;
+    P1SEL |= ECHO_PIN;
+
+    // tester led
+
+    P2DIR |= LED_PIN;
+    P2DIR &= ~LED_PIN;
+
+
+    // initialize TA0 to capture in CCR2 on both edges
+    TA0CCTL2 |= CM_3 + SCS + CCIS_0 + CAP + CCIE;
+
+
+    // initialize TA0 to compare CCR0
+    //TA0CTL |= TASSEL_2 + MC_2 + ID_0;
+    // Set up TA0 to compare CCR0 (measure interval)
+    TA0CCR0 = MEAS_INTERVAL;
+    TA0CCTL0 = CCIE;
+
+    // Set up TA0 with ACLK / 4 = 8192 Hz
+    TA0CTL = TASSEL__ACLK | ID__4 | MC__CONTINUOUS | TACLR;
+
+
+    uint16_t lastCount = 0;
+    uint32_t distance = 0;
+    for (;;) {
+        triggerMeas();
+        // Wait for echo start
+        __low_power_mode_3();
+
+        lastCount = TA0CCR2;
+
+        // Wait for echo end
+        __low_power_mode_3();
+
+        distance = TA0CCR2 - lastCount;
+        distance *= 34000;
+        distance >>= 14;  // division by 16384 (2 ^ 14)
+
+        if (distance >= DISTANCE_THRESHOLD) {
+            // Turn on LED
+            P2OUT |= 5;
+        } else {
+            // Turn off LED
+            P2OUT &= ~5;
+        }
+            // Wait for the next measure interval tick
+            __low_power_mode_3();
+    }
+
+
+
+    //global interrupt
+    //__bis_SR_register(GIE);
+    //_BIS_SR(GIE);
+
+
+}
+
+
+
+
+void usSensorMain(void) {
+    usSensorInit();
+
+    for(;;) {
+        triggerMeas();
+
+        // Adjust to fit measurement cycles
+        __delay_cycles(MEAS_INTERVAL);
+    }
+
+}
+
+
+int main(void) {
+    WDTCTL = WDTPW | WDTHOLD;   // Stop watchdog timer
+
+    usSensorMain();
+    return 0;
+}
+
+
+
+#pragma vector = TIMER0_A0_VECTOR
+__interrupt void TIMER0_A0_ISR (void) {
+    // Measure interval tick
+    __low_power_mode_off_on_exit();
+    TA0CCR0 += MEAS_INTERVAL;
+}
+
+#pragma vector = TIMER0_A1_VECTOR
+__interrupt void TIMER0_A1_ISR (void) {
+    // Echo pin state toggled
+    __low_power_mode_off_on_exit();
+    TA0IV = 0;
+}
