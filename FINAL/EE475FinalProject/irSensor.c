@@ -8,12 +8,13 @@
 
 #include "irSensor.h"
 
-/* sets up pins 2.0 and 2.2 as output GPIOs
+/* sets up pins P2.0 and P1.4 2.4 as output GPIOs
  */
 void setupGPIO(void){
 
-    P2SEL &= 0x00;
-    P2DIR |= 0x31;
+    //P2SEL &= 0x00;
+    P1DIR |= BIT4;
+    P2DIR |= BIT0;
 }
 
 // conversion results stored in ADC12MEMx
@@ -38,20 +39,11 @@ void setupADC(void){
 
 void updateADC(void){
     ADC12CTL0 |= 0x01; //ADC12SC
-    // static unsigned int index = 0;
-    /*while(index < 8) {
-        ADCdata1[index] = ADC12MEM0;           // Move A0 results, IFG is cleared
-        ADCdata2[index] = ADC12MEM1;           // Move A1 results, IFG is cleared
-        ADCdata3[index] = ADC12MEM2;           // Move A2 results, IFG is cleared
-        ADCdata4[index] = ADC12MEM3;           // Move A3 results, IFG is cleared
-        index++;
-    }
-    */
 
-    ADCdata1 = ADC12MEM0;
-    ADCdata2 = ADC12MEM1;
-    ADCdata3 = ADC12MEM2;
-    ADCdata4 = ADC12MEM3;
+    ADCdistance1 = ADC12MEM0;
+    ADCdistance2 = ADC12MEM1;
+    ADCdistance3 = ADC12MEM2;
+    ADCdistance4 = ADC12MEM3;
 
     ADC12CTL0 &= 0xFE; // ADC12SC
 
@@ -60,15 +52,18 @@ void updateADC(void){
 /* Update and test IR sensors
  */
 void irSensorLoop(void) {
-    P2OUT = P2OUT ^ 0x11;
+    P1OUT = P1OUT ^ 0x10;
+    P2OUT = P2OUT ^ 0x01;
     if(P2OUT & 0x01 == 1) {
         updateADC();
     }
-    if(ADCdata4 >= 250) {
+    printf("IR Distances -- 1: %d, 2: %d, 3: %d, 4: %d\n", ADCdistance1, ADCdistance2, ADCdistance3, ADCdistance4);
+    /*if(ADCdata4 >= 250) {
         P2OUT |= 0x20;
     } else {
         P2OUT &= 0xDF;
     }
+    */
 }
 
 /* Setup IR sensors and ADC read registers

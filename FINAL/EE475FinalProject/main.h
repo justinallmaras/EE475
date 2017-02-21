@@ -11,7 +11,6 @@
 #include <msp430.h>
 #endif
 
-
 #ifndef USSENSOR_C_
 #define USSENSOR_C_
 #include "usSensor.c"
@@ -20,4 +19,14 @@
 #ifndef IRSENSOR_C_
 #define IRSENSOR_C_
 #include "irSensor.c"
+#endif
+
+#ifndef MOTORFUNCTIONS_C_
+#define MOTORFUNCTIONS_C_
+#include "motorFunctions.c"
+#endif
+
+#ifndef ENCODERS_C_
+#define ENCODERS_C_
+#include "encoders.c"
 #endif

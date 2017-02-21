@@ -43,17 +43,14 @@
 #define num_of_results  8
 
 // IR sensor global variables
-//volatile unsigned int ADCdata1[num_of_results];
-//volatile unsigned int ADCdata2[num_of_results];
-//volatile unsigned int ADCdata3[num_of_results];
-//volatile unsigned int ADCdata4[num_of_results];
-unsigned int ADCdata1;
-unsigned int ADCdata2;
-unsigned int ADCdata3;
-unsigned int ADCdata4;
+unsigned int ADCdistance1;
+unsigned int ADCdistance2;
+unsigned int ADCdistance3;
+unsigned int ADCdistance4;
 
 // IR Sensor Functions
 void setupGPIO(void);
 void setupADC(void);
 void updateADC(void);
+void irSensorLoop(void);
 #endif /* IRSENSOR_H_ */

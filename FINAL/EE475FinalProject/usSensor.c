@@ -18,21 +18,19 @@ __interrupt void TIMER0_A1_ISR(void) {
     } else {                        // Falling edge
         // Formula: Distance in cm = (Time in uSec)/58
         distance = (TA0CCR2 - up_counter) / DISTANCE_CONST;
-        //printf("distance: %d\n", distance);
+        printf("Ultrasonic Distance: %d\n", distance);
     }
     // Clear interrupt flag
     TA0IV = 0;
     _BIS_SR_IRQ(GIE);
 }
 
-/* Triggers the measurement on the ultrasonic sensor using 10us pulse on P1.4
+/* Triggers the measurement on the ultrasonic sensor using 10us pulse on P2.5
  */
 void usTrigMeas(void) {
     // start trigger
     P1OUT |= TRIGGER_PIN;
-
     __delay_cycles(10);
-
     // end trigger
     P1OUT &= ~TRIGGER_PIN;
 }
@@ -64,13 +62,9 @@ void usSensorInit(void) {
 void usSensorLoop(void) {
     //send trigger
     usTrigMeas();
-
     // wait measurement interval
     __delay_cycles(60000);
 }
-
-
-
 
 
 /*

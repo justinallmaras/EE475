@@ -41,7 +41,7 @@
 #define USSENSOR_H_
 
 // Ultrasonic Sensor Macros
-#define TRIGGER_PIN     BIT4
+#define TRIGGER_PIN     BIT5
 #define ECHO_PIN        BIT3
 #define MEAS_INTERVAL   60000
 #define DISTANCE_CONST  58
