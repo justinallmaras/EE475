@@ -26,7 +26,9 @@
 #include "motorFunctions.c"
 #endif
 
+/*
 #ifndef ENCODERS_C_
 #define ENCODERS_C_
 #include "encoders.c"
 #endif
+*/

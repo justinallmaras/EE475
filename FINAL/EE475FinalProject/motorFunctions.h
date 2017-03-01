@@ -23,21 +23,43 @@
 #include <stdio.h>
 #endif
 
+#ifndef ENCODERS_C_
+#define ENCODERS_C_
+#include "encoders.c"
+#endif
+
 
 #ifndef MOTORFUNCTIONS_H_
 #define MOTORFUNCTIONS_H_
 
+#define EIGTH_TURN_CONST 36         //36mm
+#define LATERAL_VERTEX_DISTANCE 200 //15mm
+#define DIAGONAL_VERTEX_DISTANCE 210 // 21.2 mm
+#define RIGHT_ADJUST 1
+#define LEFT_ADJUST  0
+
+unsigned int state;
+
 // Motor control function declarations
 void motorFunctionsLoop(void);
 void motorsInit(void);
-void turnRight(int pwm);
-void turnLeft(int pwm);
-void moveForwards(int pwm);
-void moveBackwards(int pwm);
-void stop(void);
-void setA(int a1, int a2, int pwm);
-void setB(int b1, int b2, int pwm);
-void setPWM(int dutyCycle);
+int traverseVertices(int targetVertex, int duty);
+int moveForwards(int pos, int duty);
+int turnLeft(int pos, int duty);
+int turnRight(int pos, int duty);
+int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir, int duty);
+void leftControl(int dir, int duty);
+void rightControl(int dir, int duty);
+
+//void turnRight(int pwm);
+//void justForwards(int pwm);
+//void moveBackwards(int pwm);
+//void stop(void);
+
+void setA(int a1, int a2);
+void setB(int b1, int b2);
+void setPWMA(int duty);
+void setPWMB(int duty);
 
 #endif /* MOTORFUNCTIONS_H_ */
 
