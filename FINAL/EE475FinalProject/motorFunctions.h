@@ -38,6 +38,10 @@
 #define RIGHT_ADJUST 1
 #define LEFT_ADJUST  0
 
+#define K_P     1
+#define K_I     0.5
+#define K_D     0.25
+
 unsigned int state;
 
 // Motor control function declarations

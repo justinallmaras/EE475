@@ -9,12 +9,14 @@
 #include "encoders.h"
 
 void motorFunctionsLoop(void){
+    /*
     int taskComplete = 0;
     int i;
-    //justForwards(20);
-    //while(taskComplete != 1) {
-        //taskComplete = traverseVertices(0, 20);
-    //}
+    justForwards(20);
+    while(taskComplete != 1) {
+        taskComplete = traverseVertices(0, 20);
+    }
+
 
         for(i = 0; i < 8; i++) {
             // printf("loop iteration: %d\n", i);
@@ -31,7 +33,7 @@ void motorFunctionsLoop(void){
             }
             taskComplete = 0;
         }
-
+    */
 
     // printf("leftDist: %d\n", leftDist);
     // printf("rightDist: %d\n", rightDist);
@@ -126,6 +128,47 @@ int turnRight(int pos, int duty) {
  * duty = duty cycle speed for all motors
  * iteration = recursive cutoff for corrective feedback loop
  */
+/*
+int motorFeedbackLoop(int targetDistance, uint8_t leftDir, uint8_t rightDir, int startDuty) {
+    // left and right encoder and duty cycle initial variables
+    int leftCount = resetLeftEncoder();
+    int rightCount = resetRightEncoder();
+    int dutyLeft = startDuty;
+    int dutyRight = startDuty;
+    uint8_t finished = 0;
+
+    // PID control variables
+    int p_error = 0;
+    int i_error = 0;
+    int d_error = 0;
+    int prev_time;
+    int curr_time;
+
+    while (finished == 0) {
+       leftCount = checkDistLeft();
+       rightCount = checkDistRight();
+       prev_time = curr_time;
+       curr_time =
+       p_error = leftCount - rightCount;
+       i_error = i_error + p_error;
+       d_error = p_error - d_error;
+
+
+
+
+        * dutyLeft -> set by PID loop
+        * dutyRight -> set by PID loop
+
+
+       // set right and left controls
+       rightControl(rightDir, dutyRight);
+       leftControl(leftDir, dutyLeft);
+
+
+    }
+}
+*/
+
 /*
 int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir, int duty, int iteration) {
     int leftDist = 0;
