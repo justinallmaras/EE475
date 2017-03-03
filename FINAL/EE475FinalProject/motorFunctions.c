@@ -9,38 +9,62 @@
 #include "encoders.h"
 
 void motorFunctionsLoop(void){
-    /*
+
     int taskComplete = 0;
     int i;
-    justForwards(20);
-    while(taskComplete != 1) {
+
+    /*
+    while(1) {
+        //rightControl(1, 20);
+        //leftControl(1, 20);
+        //printf("hello\n");
         taskComplete = traverseVertices(0, 20);
+        __delay_cycles(10000000);
+        taskComplete = turnRight(4, 20);
+        __delay_cycles(10000000);
+        taskComplete = traverseVertices(0, 20);
+        __delay_cycles(10000000);
+        taskComplete = turnLeft(4, 20);
+       __delay_cycles(10000000);
+        // rightControl(-1, 20);
     }
+    */
+
 
 
         for(i = 0; i < 8; i++) {
             // printf("loop iteration: %d\n", i);
             while(taskComplete != 1) {
-                taskComplete = traverseVertices(i, 100);
+                taskComplete = traverseVertices(i, 20);
             }
+            __delay_cycles(3000000);
             taskComplete = 0;
             while(taskComplete != 1) {
                 if(i < 4) {
-                    taskComplete = traverseVertices(i + 4, 100);
+                    taskComplete = traverseVertices(i + 4, 20);
                 } else { // if i >=4
-                    taskComplete = traverseVertices(i - 4, 100);
+                    taskComplete = traverseVertices(i - 4, 20);
                 }
             }
             taskComplete = 0;
+            __delay_cycles(3000000);
         }
-    */
+
 
     // printf("leftDist: %d\n", leftDist);
     // printf("rightDist: %d\n", rightDist);
 }
 
-void motorsInit(void){
+void motorsInit(int botNumber){
     state = 0;
+    updatePWM = 0;
+
+
+    PIDleftCountCurr = 0;
+    PIDrightCountCurr = 0;
+    PIDleftCountPrev = 0;
+    PIDrightCountPrev = 0;
+
     // PWMA: P2.4, PWMB: 2.5, timer TA2.1 TA2.2
     P2DIR |= 0x30;
     P2SEL |= 0x30; // set P4 pins to peripheral mode function
@@ -66,44 +90,70 @@ void motorsInit(void){
     P3DIR |= BIT7;
     P3OUT |= BIT7;
 
+    // setup motor function loop interrupt
+    TBCCTL0 = CCIE;
+    TBCCR0 = 50000;
+    TBCTL = TBSSEL_2 + MC_1 + TBCLR;
+
+    // scale by 1/10 for duty cycle equivalent
+    if(botNumber == 1) {
+        leftPWMadj = 8;
+        rightPWMadj = 0;
+    } else if (botNumber == 2) {
+        leftPWMadj = 0;
+        rightPWMadj = 0;
+    } else if (botNumber == 3) {
+        leftPWMadj = 0;
+        rightPWMadj = 0;
+    } else if (botNumber == 4) {
+        leftPWMadj = 0;
+        rightPWMadj = 0;
+    } else if (botNumber == 5) {
+        leftPWMadj = 0;
+        rightPWMadj = 0;
+    } else if (botNumber == 6) {
+        leftPWMadj = 0;
+        rightPWMadj = 0;
+    }
+
     encodersInit();
 }
 
 int traverseVertices(int targetVertex, int duty) {
-    int orient = state - targetVertex;
+    int diff = targetVertex - state;
     int orientComplete = 0;
     int moveComplete = 0;
-    resetLeftEncoder();
-    resetRightEncoder();
-    if(orient == 7) {
-        orient = 1;
-    } else if (orient == -7) {
-        orient = -1;
-    }
-    while(!orientComplete || !moveComplete) {
-        if (orient < 0) {
-            orient *= -1;
-            orientComplete = turnRight(orient, duty);
-        } else if (orient > 0) {
-            orientComplete = turnLeft(orient, duty);
-        } else { // orient == 0
-            orientComplete = 1;
-        }
-        moveComplete = moveForwards(targetVertex, duty);
-    }
-    // target vertex is to the right and bot must turn right
 
+    if(diff > 0) {
+        if((diff) < 5) {
+            orientComplete = turnRight(diff, duty);
+        } else { //diff < 5
+            orientComplete = turnLeft((8 - diff), duty);
+        }
+    } else if (diff < 0) {
+        diff *= -1;
+        if((diff) < 5) {
+            orientComplete = turnLeft(diff, duty);
+        } else { //diff < 5
+            orientComplete = turnRight((8 - diff), duty);
+        }
+    } else { // diff == 0
+        orientComplete = 1;
+    }
+    __delay_cycles(3000000);
+    moveComplete = moveForwards(targetVertex, duty);
     state = targetVertex;
     return orientComplete * moveComplete;
+
 }
 
 int moveForwards(int pos, int duty) {
     int complete = 0;
     if(pos % 2 == 0) {
         // Lateral distance is valid
-        complete = motorFeedbackLoop(LATERAL_VERTEX_DISTANCE, 1, LATERAL_VERTEX_DISTANCE, 1, duty);
+        complete = motorFeedbackLoop(LATERAL_VERTEX_DISTANCE, 1, 1, duty);
     } else { // if position is odd, diagonal traversal necessary
-        complete = motorFeedbackLoop(DIAGONAL_VERTEX_DISTANCE, 1, DIAGONAL_VERTEX_DISTANCE, 1, duty);
+        complete = motorFeedbackLoop(DIAGONAL_VERTEX_DISTANCE, 1, 1, duty);
     }
     return complete;
 }
@@ -111,14 +161,14 @@ int moveForwards(int pos, int duty) {
 // will turn robot "pos" number to left
 int turnLeft(int pos, int duty) {
     int radialDistance = pos * EIGTH_TURN_CONST;
-    int complete = motorFeedbackLoop(radialDistance, -1, radialDistance, 1, duty / 2);
+    int complete = motorFeedbackLoop(radialDistance, -1, 1, duty);
     return complete;
 }
 
 // will turn robot "pos" number to right
 int turnRight(int pos, int duty) {
     int radialDistance = pos * EIGTH_TURN_CONST;
-    int complete = motorFeedbackLoop(radialDistance, 1, radialDistance, -1, duty / 2);
+    int complete = motorFeedbackLoop(radialDistance, 1, -1, duty);
     return complete;
 }
 
@@ -128,46 +178,100 @@ int turnRight(int pos, int duty) {
  * duty = duty cycle speed for all motors
  * iteration = recursive cutoff for corrective feedback loop
  */
-/*
-int motorFeedbackLoop(int targetDistance, uint8_t leftDir, uint8_t rightDir, int startDuty) {
+
+int motorFeedbackLoop(int targetDistance, int8_t leftDir, int8_t rightDir, int startDuty) {
     // left and right encoder and duty cycle initial variables
-    int leftCount = resetLeftEncoder();
-    int rightCount = resetRightEncoder();
+    int leftCount = 0;
+    int rightCount = 0;
+    resetLeftEncoder();
+    resetRightEncoder();
     int dutyLeft = startDuty;
     int dutyRight = startDuty;
+
     uint8_t finished = 0;
 
     // PID control variables
     int p_error = 0;
+    int p_error_prev = 0;
     int i_error = 0;
     int d_error = 0;
-    int prev_time;
-    int curr_time;
+    double output;
+
 
     while (finished == 0) {
-       leftCount = checkDistLeft();
-       rightCount = checkDistRight();
-       prev_time = curr_time;
-       curr_time =
-       p_error = leftCount - rightCount;
-       i_error = i_error + p_error;
-       d_error = p_error - d_error;
+       // __delay_cycles(1000);
+       // run distance checks on both
+       // if one has completed, the stop it
+       leftCount = checkLeftCount();
+       rightCount = checkRightCount();
+       // call timer interrupt and update PWM values
+       if(updatePWM) {
+           //printf("PID loop\n");
+           p_error_prev = p_error;
+           p_error = PIDleftCountCurr - PIDrightCountCurr;
+           i_error = i_error + p_error;
+           d_error = p_error - p_error_prev;
+           output = (K_P * p_error) + (K_I * i_error * PID_TIME) + (K_D * d_error / PID_TIME);
+           //output = (K_P * p_error);
 
+           if(output > 0) {
+               dutyRight += output;
+           } else if (output < 0) {
+               dutyRight -= output;
+           }
+           updatePWM = 0;
+       }
 
+       if (leftCount >= targetDistance || rightCount >= targetDistance) {
+           rightControl(0,dutyRight);
+           leftControl(0, dutyLeft);
+           finished = 1;
+       } else {
+           leftControl(leftDir, dutyLeft);
+           rightControl(rightDir, dutyRight);
+       }
+       /*
+       if(completeRight == 0 || completeLeft == 0) {
+           //printf("MC loop\n");
 
+           if (leftCount >= targetDistance)  {
+               leftControl(0, dutyLeft);
+               completeLeft = 1;
 
-        * dutyLeft -> set by PID loop
-        * dutyRight -> set by PID loop
-
-
-       // set right and left controls
-       rightControl(rightDir, dutyRight);
-       leftControl(leftDir, dutyLeft);
-
-
+           } else {
+               leftControl(leftDir, dutyLeft);
+           }
+           if(rightCount >= targetDistance) {
+               rightControl(0, dutyRight);
+               completeRight = 1;
+           } else {
+               rightControl(rightDir, dutyRight);
+           }
+       } else {
+           finished = 1;
+       }
+       */
     }
+    return 1;
 }
-*/
+
+// interrupt to set updatePWM flag high
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector = TIMERB0_VECTOR
+__interrupt void TIMERB0_ISR(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(TIMERB0_VECTOR))) TIMERB0_ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+    //printf("here 2\n");
+    updatePWM = 1;
+    PIDrightCountPrev = PIDrightCountCurr;
+    PIDleftCountPrev = PIDleftCountCurr;
+    PIDrightCountCurr = checkRightCount();
+    PIDleftCountCurr = checkLeftCount();
+}
 
 /*
 int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir, int duty, int iteration) {
@@ -210,6 +314,7 @@ int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir
 }
 */
 
+/*
 int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir, int duty) {
     int completeLeft = 0;
     int completeRight = 0;
@@ -241,6 +346,7 @@ int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir
     //printf("rightDist: %d\n", rightDist);
     return 1;
 }
+*/
 
 void leftControl(int dir, int duty) {
     setPWMB(duty);
@@ -270,6 +376,10 @@ void rightControl(int dir, int duty) {
     }
 }
 
+void justForwards(double pwm) {
+    setA(1, 0);
+    setB(1, 0);
+}
 /*
 void turnRight(int pwm) {
     setA(0, 1, pwm);
@@ -281,10 +391,7 @@ void turnLeft(int pwm) {
     setB(0, 1, pwm);
 }
 
-void justForwards(int pwm) {
-    setA(1, 0, pwm);
-    setB(1, 0, pwm);
-}
+
 
 void moveBackwards(int pwm) {
     setA(0, 1, pwm);
@@ -296,7 +403,7 @@ void stop(void) {
     setB(0,0,0);
 }
 */
-
+// right
 // AIN1: P3.2, AIN2: P3.3
 void setA(int a1, int a2) {
     // stop/halt
@@ -318,6 +425,7 @@ void setA(int a1, int a2) {
     }
 }
 
+// left
 // BIN1: P3.4, BIN2: P3.5
 void setB(int b1, int b2) {
     //stop/halt
@@ -339,27 +447,26 @@ void setB(int b1, int b2) {
     }
 }
 
+// right
 // setPWM sets duty cycle for both motors input 0-100
-void setPWMA(int duty) {
-    duty = duty - RIGHT_ADJUST;
-    if(duty > 100) {
-        duty = 100;
-    } else if (duty < 0) {
-        duty = 0;
+void setPWMA(double duty) {
+    if(duty > 100.0) {
+        duty = 100.0;
+    } else if (duty < 0.0) {
+        duty = 0.0;
     }
-    int pwm = (duty * 10);
+    int pwm = (int) (duty * 10 + rightPWMadj);
     TA2CCR1 = pwm;              // CCR1 PWM duty cycle
 }
 
+// left
 // setPWM sets duty cycle for both motors input 0-100
-void setPWMB(int duty) {
-    duty = duty - LEFT_ADJUST;
-    if(duty > 100) {
-        duty = 100;
-    } else if (duty < 0) {
-        duty = 0;
+void setPWMB(double duty) {
+    if(duty > 100.0) {
+        duty = 100.0;
+    } else if (duty < 0.0) {
+        duty = 0.0;
     }
-    int pwm = (duty * 10);
+    int pwm = (int) (duty * 10 + leftPWMadj);
     TA2CCR2 = pwm;
 }
-

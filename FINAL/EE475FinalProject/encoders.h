@@ -36,14 +36,13 @@
 // Ultrasonic Sensor Global Variables
 volatile unsigned int leftCount;
 volatile unsigned int rightCount;
-volatile unsigned int rightState;
 
 // Motor control function declarations
 void encodersInit(void);
-int checkDistLeft(void);
-int checkDistRight(void);
 void resetLeftEncoder(void);
 void resetRightEncoder(void);
+int checkLeftCount(void);
+int checkRightCount(void);
 
 
 #endif /* ENCODERS_H_ */

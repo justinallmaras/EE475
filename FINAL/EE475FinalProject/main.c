@@ -6,33 +6,42 @@
  */
 
 unsigned int state;
+unsigned int botNumber;
 
 void main(void)
 {
-
-    //
-    // Initialization
-    //
-
     WDTCTL = WDTPW | WDTHOLD;   // Stop watchdog timer
-    // setup system clock on P5 oscillator 6Mhz?
-    P5SEL |= BIT2 + BIT3;
-    UCSCTL6 &= ~0x1000;
-    UCSCTL6 &= ~0x100;
-    do {UCSCTL7 &= ~XT2OFFG;}               // Clear XT2 fault flags
-    while ((UCSCTL7 & XT2OFFG) != 0);       // Test XT2 fault flag
-    UCSCTL6 &= ~0xC000;
-    UCSCTL4 |= 0x05;
 
+    // read three pins to determine robot number for motor control and radio comm.
+    botNumber = 1;
 
+    // MASTER AND SYSTEM CLOCK SETTINGS
+    // Setup SMCLK output on P2.2
+    P2DIR |= BIT2;
+    P2SEL |= BIT2;
+    // Setup MCLK output on P7.7
     P7DIR |= BIT7;
     P7SEL |= BIT7;
-
+    // Port select XT2
+    P5SEL |= BIT2 + BIT3;
+    // Enable XT2
+    UCSCTL6 &= ~XT2OFF;
+    UCSCTL3 |= SELREF_2;
+    UCSCTL4 |= SELA_2;
+    do {
+        UCSCTL7 &= ~(XT2OFFG + XT1LFOFFG + DCOFFG);
+        SFRIFG1 &= ~OFIFG;
+    } while (SFRIFG1&OFIFG);
+    UCSCTL6 &= ~XT2DRIVE0;
+    UCSCTL4 |= SELS_5 + SELM_5;
 
     //usSensorInit();             // initialize ultrasonic sensors
     //irSensorInit();             // initialize IR sensors
-    motorsInit();
-    __enable_interrupt();
+    motorsInit(botNumber);
+
+    //__enable_interrupt();   // enable interrupts
+    __bis_SR_register(GIE); // enable interrupts
+
     int run = 1;
 
     //
@@ -45,10 +54,11 @@ void main(void)
             motorFunctionsLoop();
             run--;
         }
+        break;
         //int leftDistance = checkDistLeft();
         //int rightDistance = checkDistRight();
         //printf("Left Distance: %d mm, Right Distance: %d mm\n", leftDistance, rightDistance);
         __delay_cycles(50000);
     }
-
+    return;
 }

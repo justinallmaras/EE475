@@ -46,27 +46,25 @@ void encodersInit(void){
     rightCount = 0;
 }
 
+
 // Check distance left returns distance in millimeters
 // that left wheel has turned since previous check.
-int checkDistLeft(void){
-    //int distanceLeft = (leftCount * WHEEL_CIRC) / ENCODER_POLES;
-    //printf("left count: %d\n", leftCount);
-    int distanceLeft = leftCount;
-    return distanceLeft;
+int checkLeftCount(void){
+    return leftCount;
 }
+
+// Check distance right returns distance in millimeters
+// that right  wheel has turned since previous check.
+int checkRightCount(void){
+    return rightCount;
+}
+
 
 void resetLeftEncoder(void) {
     leftCount = 0;
 }
 
-// Check distance right returns distance in millimeters
-// that right  wheel has turned since previous check.
-int checkDistRight(void){
-    //int distanceRight = (rightCount * WHEEL_CIRC)  / ENCODER_POLES;
-    //printf("right count: %d\n", rightCount);
-    int distanceRight = rightCount;
-    return distanceRight;
-}
+
 
 void resetRightEncoder(void) {
     rightCount = 0;
