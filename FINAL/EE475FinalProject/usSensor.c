@@ -3,9 +3,6 @@
  *
  *
  *
- *
- *
- *
  */
 
 #include "usSensor.h"
@@ -18,7 +15,7 @@ __interrupt void TIMER0_A1_ISR(void) {
     } else {                        // Falling edge
         // Formula: Distance in cm = (Time in uSec)/58
         distance = (TA0CCR2 - up_counter) / DISTANCE_CONST;
-        printf("Ultrasonic Distance: %d\n", distance);
+        // printf("Ultrasonic Distance: %d\n", distance);
     }
     // Clear interrupt flag
     TA0IV = 0;
@@ -27,12 +24,14 @@ __interrupt void TIMER0_A1_ISR(void) {
 
 /* Triggers the measurement on the ultrasonic sensor using 10us pulse on P2.5
  */
-void usTrigMeas(void) {
+uint8_t usTrigMeas() {
     // start trigger
     P1OUT |= TRIGGER_PIN;
-    __delay_cycles(10);
+    __delay_cycles(60);
     // end trigger
     P1OUT &= ~TRIGGER_PIN;
+    __delay_cycles(60000);
+    return distance;
 }
 
 /* Initializes the pins and configures timer TA0 to capture echo pulses
@@ -57,15 +56,15 @@ void usSensorInit(void) {
 }
 
 
-/* Looped commands
- */
+
+/*
 void usSensorLoop(void) {
     //send trigger
     usTrigMeas();
     // wait measurement interval
     __delay_cycles(60000);
 }
-
+*/
 
 /*
 

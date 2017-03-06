@@ -9,30 +9,6 @@
 // Supporting Libraries
 //
 
-// msp430 header
-#ifndef MSP430_H_
-#define MSP430_H_
-#include <msp430.h>
-#endif
-
-// i.h header
-#ifndef INTRINSICS_H_
-#define INTRINSICS_H_
-#include <intrinsics.h>
-#endif
-
-// sdtint.h header
-#ifndef STDINT_H_
-#define STDINT_H_
-#include <stdint.h>
-#endif
-
-// stdio.h header
-#ifndef STDIO_H_
-#define STDIO_H_
-#include <stdio.h>
-#endif
-
 
 //
 // IR Macros, Variables, and Functions
@@ -43,14 +19,25 @@
 #define num_of_results  8
 
 // IR sensor global variables
-unsigned int ADCdistance1;
-unsigned int ADCdistance2;
-unsigned int ADCdistance3;
-unsigned int ADCdistance4;
+volatile unsigned int topDiodeRead;
+volatile unsigned int ADCdistance1;
+volatile unsigned int ADCdistance2;
+volatile unsigned int ADCdistance3;
+volatile unsigned int ADCdistance4;
+volatile unsigned int ADCdistance5;
+volatile unsigned int ADCdistance6;
+volatile unsigned int ADCdistance7;
+volatile unsigned int ADCdistance8;
+volatile unsigned int topDiode;
 
 // IR Sensor Functions
 void setupGPIO(void);
 void setupADC(void);
+void irSensorInit(void);
 void updateADC(void);
 void irSensorLoop(void);
+uint8_t readTopDiode(void);
+void checkIRFrontBack(uint8_t* frontBackData);
+void checkIRLeft(uint8_t* leftData);
+void checkIRRight(uint8_t* rightData);
 #endif /* IRSENSOR_H_ */

@@ -38,8 +38,8 @@
 #define DIAGONAL_VERTEX_DISTANCE 149 // 14.14 cm
 #define PID_TIME 0.01                  // 10 milliseconds
 
-#define K_P    0.001
-#define K_I    0.05
+#define K_P    0.01
+#define K_I    0.005
 #define K_D    0.000
 
 unsigned int state;

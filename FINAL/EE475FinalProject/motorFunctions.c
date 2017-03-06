@@ -30,8 +30,6 @@ void motorFunctionsLoop(void){
     }
     */
 
-
-
         for(i = 0; i < 8; i++) {
             // printf("loop iteration: %d\n", i);
             while(taskComplete != 1) {
@@ -50,7 +48,6 @@ void motorFunctionsLoop(void){
             __delay_cycles(3000000);
         }
 
-
     // printf("leftDist: %d\n", leftDist);
     // printf("rightDist: %d\n", rightDist);
 }
@@ -59,13 +56,12 @@ void motorsInit(int botNumber){
     state = 0;
     updatePWM = 0;
 
-
     PIDleftCountCurr = 0;
     PIDrightCountCurr = 0;
     PIDleftCountPrev = 0;
     PIDrightCountPrev = 0;
 
-    // PWMA: P2.4, PWMB: 2.5, timer TA2.1 TA2.2
+    // PWMA: P2.5 (TA2.2), PWMB: 2.4 (TA2.1)
     P2DIR |= 0x30;
     P2SEL |= 0x30; // set P4 pins to peripheral mode function
     // set base functionality for PWM pins
@@ -80,15 +76,17 @@ void motorsInit(int botNumber){
 
     //_BIS_SR(LPM0_bits);       // Enter LPM0
 
-    // AIN1: P3.2, AIN2: P3.3, BIN1: P3.4, BIN2: P3.5
+    // AIN1: P3.7, AIN2: P3.6, BIN1: P4.1, BIN2: P4.2
     // Initialize pins as outputs and in stop mode. all low.
-    P3DIR |= 0x3F;
-    P3OUT &= 0xC3;
+    P3DIR |= 0xC0;
+    P3OUT &= 0x3F;
+    P4DIR |= 0x06;
+    P4OUT &= 0xF9;
 
-    // STBY: P2.7, H-bridge not active until initialized to high state
+    // STBY: P4.0, H-bridge not active until initialized to high state
     // Will not alter standby pin after this line
-    P3DIR |= BIT7;
-    P3OUT |= BIT7;
+    P4DIR |= BIT0;
+    P4OUT |= BIT0;
 
     // setup motor function loop interrupt
     TBCCTL0 = CCIE;
@@ -97,7 +95,7 @@ void motorsInit(int botNumber){
 
     // scale by 1/10 for duty cycle equivalent
     if(botNumber == 1) {
-        leftPWMadj = 8;
+        leftPWMadj = 0;
         rightPWMadj = 0;
     } else if (botNumber == 2) {
         leftPWMadj = 0;
@@ -273,80 +271,6 @@ void __attribute__ ((interrupt(TIMERB0_VECTOR))) TIMERB0_ISR (void)
     PIDleftCountCurr = checkLeftCount();
 }
 
-/*
-int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir, int duty, int iteration) {
-    int leftDist = 0;
-    int rightDist = 0;
-    int completeLeft = 0;
-    int completeRight = 0;
-    int leftDifference;
-    int rightDifference;
-    int complete = 0;
-    while(completeLeft != 1 && completeRight != 1) {
-        if(completeLeft != 1) {
-            leftControl(leftDir, duty);
-        }
-        if(completeRight != 1) {
-            rightControl(rightDir, duty);
-        }
-        __delay_cycles(100000);
-        leftDist += checkDistLeft();
-        //printf("leftDist: %d\n", leftDist);
-        rightDist += checkDistRight();
-        if(leftDist >= targetLeft) {
-            completeLeft = 1;
-            leftControl(0, 0);
-        }
-        if(rightDist >= targetRight) {
-            completeRight = 1;
-            rightControl(0,0);
-        }
-    }
-    // overshot distance by leftDifference and rightDifference at some pwm value
-    complete = 1;
-    leftDifference = leftDist - targetLeft;
-    rightDifference = rightDist - targetRight;
-    iteration++;
-    if(iteration < 2) {
-        complete = motorFeedbackLoop(leftDifference, (leftDir * -1), rightDifference, (rightDir * -1), (duty / 2), iteration);
-    }
-    return complete;
-}
-*/
-
-/*
-int motorFeedbackLoop(int targetLeft, int leftDir, int targetRight, int rightDir, int duty) {
-    int completeLeft = 0;
-    int completeRight = 0;
-    resetLeftEncoder();
-    resetRightEncoder();
-    int leftDist = checkDistLeft();
-    int rightDist = checkDistRight();
-    while(completeRight == 0 || completeLeft == 0) {
-        rightDist = checkDistRight();
-        leftDist = checkDistLeft();
-        if(rightDist >= targetRight) {
-            rightControl(0, duty);
-            completeRight = 1;
-        } else {
-            rightControl(rightDir, duty);
-        }
-        if (leftDist >= targetLeft)  {
-            leftControl(0, duty);
-            completeLeft = 1;
-        } else {
-            leftControl(leftDir, duty);
-        }
-        //__delay_cycles(10);
-    }
-    __delay_cycles(1000000);
-    //leftDist = checkDistLeft();
-    //rightDist = checkDistRight();
-    //printf("leftDist: %d\n", leftDist);
-    //printf("rightDist: %d\n", rightDist);
-    return 1;
-}
-*/
 
 void leftControl(int dir, int duty) {
     setPWMB(duty);
@@ -376,11 +300,12 @@ void rightControl(int dir, int duty) {
     }
 }
 
+/*
 void justForwards(double pwm) {
     setA(1, 0);
     setB(1, 0);
 }
-/*
+
 void turnRight(int pwm) {
     setA(0, 1, pwm);
     setB(1, 0, pwm);
@@ -403,47 +328,49 @@ void stop(void) {
     setB(0,0,0);
 }
 */
+
 // right
-// AIN1: P3.2, AIN2: P3.3
+// AIN1: P3.7, AIN2: P3.6
 void setA(int a1, int a2) {
     // stop/halt
     if(a1 == 1 && a2 == 1) {
-        P3OUT &= ~(BIT2);
-        P3OUT &= ~(BIT3);
+        P3OUT &= ~(BIT7);
+        P3OUT &= ~(BIT6);
     // rotate CCW
     } else if (a1 == 1 && a2 == 0) {
-        P3OUT &= ~BIT3;
-        P3OUT |= BIT2;
+        P3OUT &= ~BIT6;
+        P3OUT |= BIT7;
      // rotate CW
     } else if (a1 == 0 && a2 == 1) {
-        P3OUT &= ~BIT2;
-        P3OUT |= BIT3;
+        P3OUT &= ~BIT7;
+        P3OUT |= BIT6;
     // stop
     } else if (a1 == 0 && a2 == 0) {
-        P3OUT &= ~(BIT2);
-        P3OUT &= ~(BIT3);
+        P3OUT &= ~(BIT7);
+        P3OUT &= ~(BIT6);
     }
 }
 
 // left
-// BIN1: P3.4, BIN2: P3.5
+// old::: BIN1: P3.4, BIN2: P3.5
+//        BIN1: P4.1, BIN2: P4.2
 void setB(int b1, int b2) {
     //stop/halt
     if(b1 == 1 && b2 == 1) {
-        P3OUT &= ~(BIT4);
-        P3OUT &= ~(BIT5);
+        P4OUT &= ~(BIT1);
+        P4OUT &= ~(BIT2);
     // rotate CCW
     } else if (b1 == 1 && b2 == 0) {
-        P3OUT &= ~BIT5;
-        P3OUT |= BIT4;
+        P4OUT &= ~BIT2;
+        P4OUT |= BIT1;
     // rotate CW
     } else if (b1 == 0 && b2 == 1) {
-        P3OUT &= ~BIT4;
-        P3OUT |= BIT5;
+        P4OUT &= ~BIT1;
+        P4OUT |= BIT2;
     // stop
     } else if (b1 == 0 && b2 == 0) {
-        P3OUT &= ~(BIT4);
-        P3OUT &= ~(BIT5);
+        P4OUT &= ~(BIT1);
+        P4OUT &= ~(BIT2);
     }
 }
 
@@ -456,7 +383,7 @@ void setPWMA(double duty) {
         duty = 0.0;
     }
     int pwm = (int) (duty * 10 + rightPWMadj);
-    TA2CCR1 = pwm;              // CCR1 PWM duty cycle
+    TA2CCR2 = pwm;              // CCR1 PWM duty cycle
 }
 
 // left
@@ -468,5 +395,5 @@ void setPWMB(double duty) {
         duty = 0.0;
     }
     int pwm = (int) (duty * 10 + leftPWMadj);
-    TA2CCR2 = pwm;
+    TA2CCR1 = pwm;
 }
